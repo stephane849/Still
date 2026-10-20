@@ -1,0 +1,118 @@
+{
+  "version": 8,
+  "name": "Still",
+  "glyphs": "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+  "sources": {
+    "osm": {
+      "type": "vector",
+      "url": "__SOURCE__",
+      "attribution": "© OpenStreetMap contributors"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": { "background-color": "__BG__" }
+    },
+    {
+      "id": "water-outline",
+      "type": "line",
+      "source": "osm",
+      "source-layer": "water",
+      "paint": {
+        "line-color": "__FG__",
+        "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.5, 16, 1.5]
+      }
+    },
+    {
+      "id": "road-minor",
+      "type": "line",
+      "source": "osm",
+      "source-layer": "transportation",
+      "minzoom": 13,
+      "filter": ["in", ["get", "class"], ["literal", ["minor", "service"]]],
+      "layout": { "line-cap": "round", "line-join": "round" },
+      "paint": {
+        "line-color": "__FG__",
+        "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 13, 0.5, 18, 6]
+      }
+    },
+    {
+      "id": "road-tertiary",
+      "type": "line",
+      "source": "osm",
+      "source-layer": "transportation",
+      "minzoom": 11,
+      "filter": ["==", ["get", "class"], "tertiary"],
+      "layout": { "line-cap": "round", "line-join": "round" },
+      "paint": {
+        "line-color": "__FG__",
+        "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 11, 0.6, 18, 9]
+      }
+    },
+    {
+      "id": "road-secondary",
+      "type": "line",
+      "source": "osm",
+      "source-layer": "transportation",
+      "minzoom": 9,
+      "filter": ["in", ["get", "class"], ["literal", ["primary", "secondary"]]],
+      "layout": { "line-cap": "round", "line-join": "round" },
+      "paint": {
+        "line-color": "__FG__",
+        "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 9, 0.8, 18, 12]
+      }
+    },
+    {
+      "id": "road-major",
+      "type": "line",
+      "source": "osm",
+      "source-layer": "transportation",
+      "filter": ["in", ["get", "class"], ["literal", ["motorway", "trunk"]]],
+      "layout": { "line-cap": "round", "line-join": "round" },
+      "paint": {
+        "line-color": "__FG__",
+        "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 5, 1, 18, 16]
+      }
+    },
+    {
+      "id": "road-label",
+      "type": "symbol",
+      "source": "osm",
+      "source-layer": "transportation_name",
+      "minzoom": 13,
+      "filter": ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary", "secondary", "tertiary"]]],
+      "layout": {
+        "symbol-placement": "line",
+        "text-field": ["coalesce", ["get", "name:latin"], ["get", "name"], ["get", "ref"]],
+        "text-font": ["Noto Sans Regular"],
+        "text-size": 14,
+        "text-max-angle": 30
+      },
+      "paint": {
+        "text-color": "__FG__",
+        "text-halo-color": "__BG__",
+        "text-halo-width": 2
+      }
+    },
+    {
+      "id": "place-label",
+      "type": "symbol",
+      "source": "osm",
+      "source-layer": "place",
+      "maxzoom": 13,
+      "filter": ["in", ["get", "class"], ["literal", ["city", "town"]]],
+      "layout": {
+        "text-field": ["coalesce", ["get", "name:latin"], ["get", "name"]],
+        "text-font": ["Noto Sans Regular"],
+        "text-size": 16
+      },
+      "paint": {
+        "text-color": "__FG__",
+        "text-halo-color": "__BG__",
+        "text-halo-width": 2
+      }
+    }
+  ]
+}

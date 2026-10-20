@@ -1,0 +1,21 @@
+package io.github.stephane849.still
+
+data class Poi(
+    val name: String,
+    val address: Address,
+    val hours: List<String>,
+    val phone: String?,
+    val description: String,
+    val website: String?,
+    val lat: Double?,
+    val lng: Double?,
+    val isOutsideSearchRadius: Boolean = false,
+)
+
+data class Address(
+    val street: String,
+    val city: String,
+    val state: String,
+    val zip: String,
+    val country: String
+)
