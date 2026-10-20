@@ -6,13 +6,15 @@ Still opens on a map: black roads on white, nothing else. Search for a place, se
 
 Still is a fork of [CalmDirectory](https://github.com/davidraywilson/CalmDirectory) by David Ray Wilson (v1.0.0-alpha.2), which provides the place search and details screens. Like CalmDirectory, it is licensed under the GNU GPL v3.
 
-## What works in v0.1
+## What works
 
-- Map home screen with zoom and recenter buttons, no rotation or tilt, and instant camera moves to limit e-ink ghosting.
+- Opens on the map, with zoom and recenter buttons, no rotation or tilt, and instant camera moves to limit e-ink ghosting.
+- Search like Google Maps: tap "Where to?" and type, or pick a category or saved place. Search is CalmDirectory's (HERE or Google Places).
 - Up to four saved places along the bottom of the map.
-- Place search from CalmDirectory (HERE or Google Places), with a new Directions button.
-- Route preview with time, distance, main road and arrival time.
-- Turn-by-turn drive screen with voice prompts and automatic rerouting.
+- Route preview with time, distance, main road, arrival time, traffic delay and road events.
+- Driving with the map: it follows you with the route drawn, the next turn in a card on top, voice prompts and automatic rerouting.
+- Android Auto: saved places list, turn-by-turn navigation template over Still's own map, black roads on white by day and white on black at night (car screen only). Ending a drive on the phone or the car ends it in both.
+- Traffic: with a TomTom key, routes account for live traffic and slow sections show as a dashed route line. With an Ontario 511 key, roadwork, closures and collisions on the route are marked and announced.
 
 ## Map and routing data
 
@@ -25,8 +27,16 @@ Still is a fork of [CalmDirectory](https://github.com/davidraywilson/CalmDirecto
 - Open in Android Studio, or let GitHub Actions build it: every push to `main` produces a debug APK under the workflow run's artifacts.
 - Place search with HERE needs a HERE API key: add `HERE_API_KEY=...` to `local.properties`, or set a `HERE_API_KEY` repository secret for CI builds.
 
+## Android Auto
+
+Still is sideloaded, so Android Auto only lists it after you turn on developer mode in Android Auto (tap the version number ten times), then in its developer settings enable "Unknown sources".
+
+## Traffic keys
+
+- TomTom: free developer key from developer.tomtom.com, entered in Settings. Without it, Still routes through OSRM with no traffic.
+- Ontario 511: free developer key from 511on.ca (Developers), entered in Settings. The API allows ten calls a minute; Still asks once per route.
+
 ## Roadmap
 
-- v0.2: Android Auto (navigation template, night mode on the car screen only).
-- v0.3: live traffic (TomTom) and Ontario 511 incidents.
-- Later: on-device offline routing.
+- Search from the car screen by voice.
+- On-device offline routing.

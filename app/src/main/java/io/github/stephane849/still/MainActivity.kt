@@ -59,7 +59,6 @@ import io.github.stephane849.still.data.MapApp
 import io.github.stephane849.still.data.SearchProvider
 import io.github.stephane849.still.data.UserPreferencesRepository
 import io.github.stephane849.still.ui.theme.CalmDirectoryTheme
-import io.github.stephane849.still.navigation.NavigationViewModel
 import io.github.stephane849.still.ui.DriveScreen
 import io.github.stephane849.still.ui.MapHomeScreen
 import io.github.stephane849.still.ui.RoutePreviewScreen
@@ -82,7 +81,7 @@ class MainActivity : ComponentActivity() {
                 val mainViewModel: MainViewModel = viewModel()
                 val apiKey by mainViewModel.apiKey.collectAsState()
                 val focusRequester = remember { FocusRequester() }
-                val navigationViewModel: NavigationViewModel = viewModel()
+                val navigationViewModel = navigationSession
                 val route = navBackStackEntry?.destination?.route
                 // The map, route preview and drive screens draw their own headers.
                 val showTopBar = route != null && route !in setOf("main", "preview", "drive")
@@ -105,10 +104,15 @@ class MainActivity : ComponentActivity() {
                         startDestination = "main",
                         modifier = Modifier.padding(paddingValues),
                     ) {
-                        composable("main") { MapHomeScreen(navController, navigationViewModel) }
+                        composable("main") {
+                            MapHomeScreen(navController, onSearch = {
+                                searchViewModel.resetSearch()
+                                navController.navigate("search?autoFocus=true")
+                            })
+                        }
                         composable("browse") { MainScreen(navController, searchViewModel = searchViewModel) }
-                        composable("preview") { RoutePreviewScreen(navController, navigationViewModel) }
-                        composable("drive") { DriveScreen(navController, navigationViewModel) }
+                        composable("preview") { RoutePreviewScreen(navController) }
+                        composable("drive") { DriveScreen(navController) }
                         composable("settings") {
                             val scrollToLocationSettings =
                                 navController.previousBackStackEntry?.savedStateHandle?.get<Boolean>(

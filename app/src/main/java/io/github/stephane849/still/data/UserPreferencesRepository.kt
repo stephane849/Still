@@ -57,6 +57,22 @@ class UserPreferencesRepository(
                 ?: io.github.stephane849.still.routing.OsrmRouter.DEFAULT_SERVER
         }
 
+    /** TomTom API key for traffic-aware routing; blank means use OSRM. */
+    val tomTomKey: Flow<String> = context.dataStore.data
+        .map { preferences -> preferences[TOMTOM_KEY] ?: "" }
+
+    /** Ontario 511 developer key for road events; blank means none. */
+    val ontario511Key: Flow<String> = context.dataStore.data
+        .map { preferences -> preferences[ONTARIO_511_KEY] ?: "" }
+
+    suspend fun saveTomTomKey(key: String) {
+        context.dataStore.edit { settings -> settings[TOMTOM_KEY] = key.trim() }
+    }
+
+    suspend fun saveOntario511Key(key: String) {
+        context.dataStore.edit { settings -> settings[ONTARIO_511_KEY] = key.trim() }
+    }
+
     suspend fun saveRoutingServer(url: String) {
         context.dataStore.edit { settings ->
             settings[ROUTING_SERVER] = url.trim()
@@ -107,6 +123,8 @@ class UserPreferencesRepository(
         val SEARCH_PROVIDER = stringPreferencesKey("search_provider")
         val SEARCH_RADIUS = intPreferencesKey("search_radius") // in miles
         val ROUTING_SERVER = stringPreferencesKey("routing_server")
+        val TOMTOM_KEY = stringPreferencesKey("tomtom_key")
+        val ONTARIO_511_KEY = stringPreferencesKey("ontario_511_key")
 
     }
 }

@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -28,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -36,29 +39,28 @@ import com.mudita.mmd.components.progress_indicator.CircularProgressIndicatorMMD
 import io.github.stephane849.still.data.SavedPlace
 import io.github.stephane849.still.data.SavedPlacesRepository
 import io.github.stephane849.still.map.StillMap
-import io.github.stephane849.still.navigation.NavigationViewModel
 import io.github.stephane849.still.navigation.formatDistance
 import io.github.stephane849.still.navigation.formatDuration
+import io.github.stephane849.still.navigationSession
 import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
 
 @Composable
-fun RoutePreviewScreen(
-    navController: NavController,
-    navigationViewModel: NavigationViewModel
-) {
+fun RoutePreviewScreen(navController: NavController) {
     val context = LocalContext.current
-    val destination by navigationViewModel.destination.collectAsState()
-    val route by navigationViewModel.route.collectAsState()
-    val loading by navigationViewModel.loading.collectAsState()
-    val error by navigationViewModel.error.collectAsState()
+    val session = context.navigationSession
+    val destination by session.destination.collectAsState()
+    val route by session.route.collectAsState()
+    val incidents by session.incidents.collectAsState()
+    val loading by session.loading.collectAsState()
+    val error by session.error.collectAsState()
     val savedRepo = remember { SavedPlacesRepository(context) }
     val saved by savedRepo.places.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(destination) {
-        if (destination != null && navigationViewModel.route.value == null) navigationViewModel.planRoute()
+        if (destination != null && session.route.value == null) session.planRoute()
     }
 
     val dest = destination
@@ -94,12 +96,12 @@ fun RoutePreviewScreen(
                 Text(error ?: "Finding a route…", fontSize = 20.sp)
                 if (error != null) {
                     Spacer(Modifier.height(16.dp))
-                    ButtonMMD(onClick = { navigationViewModel.planRoute() }) { Text("Try again") }
+                    ButtonMMD(onClick = { session.planRoute() }) { Text("Try again") }
                 }
             }
             else -> {
                 Row(
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp),
                     verticalAlignment = Alignment.Bottom,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -112,8 +114,17 @@ fun RoutePreviewScreen(
                 Text(
                     text = "${via}arrive $arrive",
                     fontSize = 18.sp,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                 )
+                if (r.hasTraffic) {
+                    val traffic = if (r.trafficDelayS >= 60) {
+                        "${formatDuration(r.trafficDelayS)} slower than usual · dashed line = slow traffic"
+                    } else {
+                        "Traffic is light"
+                    }
+                    Text(traffic, fontSize = 16.sp, modifier = Modifier.padding(horizontal = 16.dp))
+                }
+
                 StillMap(
                     modifier = Modifier
                         .weight(1f)
@@ -121,11 +132,24 @@ fun RoutePreviewScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .border(1.dp, Color.Black),
                     location = null,
-                    route = r.points
+                    route = r,
+                    incidents = incidents
                 )
+
+                incidents.take(2).forEach { inc ->
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(Icons.Outlined.WarningAmber, contentDescription = null, modifier = Modifier.size(22.dp))
+                        Text(inc.shortLabel, fontSize = 17.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+
                 ButtonMMD(
                     onClick = {
-                        navigationViewModel.startDrive()
+                        session.startDrive()
                         navController.navigate("drive")
                     },
                     modifier = Modifier

@@ -1,6 +1,5 @@
 package io.github.stephane849.still.ui
 
-import android.speech.tts.TextToSpeech
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,12 +7,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,113 +20,134 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import io.github.stephane849.still.data.LocationRepository
-import io.github.stephane849.still.navigation.NavigationViewModel
+import io.github.stephane849.still.map.StillMap
 import io.github.stephane849.still.navigation.formatDistance
 import io.github.stephane849.still.navigation.formatDuration
+import io.github.stephane849.still.navigationSession
 import java.text.DateFormat
 import java.util.Date
-import java.util.Locale
 
 /**
- * Turn-by-turn on the phone: only the next decision, in large type.
- * There is no live map here; the screen changes once per step, which
- * suits e-ink. Voice prompts do most of the work.
+ * Turn-by-turn on the phone: the map follows you with the route drawn,
+ * the next turn sits in a card on top, and arrival time sits below.
  */
 @Composable
-fun DriveScreen(
-    navController: NavController,
-    navigationViewModel: NavigationViewModel
-) {
+fun DriveScreen(navController: NavController) {
     val context = LocalContext.current
     val view = LocalView.current
-    val destination by navigationViewModel.destination.collectAsState()
-    val drive by navigationViewModel.drive.collectAsState()
-    val loading by navigationViewModel.loading.collectAsState()
-    val locationRepository = remember { LocationRepository(context) }
-    val location by locationRepository.location.collectAsState()
-
-    val tts = remember {
-        lateinit var engine: TextToSpeech
-        engine = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) engine.language = Locale.getDefault()
-        }
-        engine
-    }
+    val session = context.navigationSession
+    val destination by session.destination.collectAsState()
+    val drive by session.drive.collectAsState()
+    val route by session.route.collectAsState()
+    val incidents by session.incidents.collectAsState()
+    val location by session.location.collectAsState()
+    val loading by session.loading.collectAsState()
 
     DisposableEffect(Unit) {
         view.keepScreenOn = true
-        locationRepository.startLocationUpdates(driving = true)
-        onDispose {
-            view.keepScreenOn = false
-            locationRepository.stopLocationUpdates()
-            tts.stop()
-            tts.shutdown()
-        }
+        onDispose { view.keepScreenOn = false }
     }
 
-    LaunchedEffect(location) {
-        location?.let { navigationViewModel.onLocation(it) }
-    }
-
-    LaunchedEffect(Unit) {
-        navigationViewModel.speech.collect { text ->
-            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, text)
-        }
+    // Leaving via the car screen's End button also brings the phone back home.
+    LaunchedEffect(drive) {
+        if (drive == null) navController.popBackStack("main", inclusive = false)
     }
 
     fun end() {
-        navigationViewModel.endDrive()
+        session.endDrive()
         navController.popBackStack("main", inclusive = false)
     }
 
     val d = drive
     Column(Modifier.fillMaxSize().background(Color.White)) {
-        StillHeader(title = "To ${destination?.name ?: ""}")
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            StillMap(
+                modifier = Modifier.fillMaxSize(),
+                location = location,
+                route = route,
+                incidents = incidents,
+                follow = true
+            )
 
-        if (d == null) {
-            Box(Modifier.weight(1f))
-        } else if (d.arrived) {
-            Column(Modifier.weight(1f).padding(16.dp), verticalArrangement = Arrangement.Center) {
-                Text("You've arrived", fontSize = 40.sp, fontWeight = FontWeight.Bold)
-            }
-        } else {
+            // Next-turn card.
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 16.dp, vertical = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                    .align(Alignment.TopStart)
+                    .padding(10.dp)
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .border(3.dp, Color.Black)
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Icon(maneuverIcon(d.next), contentDescription = null, modifier = Modifier.size(112.dp))
-                Text(formatDistance(d.distanceToNextM), fontSize = 76.sp, fontWeight = FontWeight.Bold)
-                Text(d.next?.action ?: "Continue", fontSize = 30.sp, fontWeight = FontWeight.Medium)
-                d.next?.ontoRoad?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 24.sp) }
-
-                d.afterNext?.let { then ->
-                    Spacer(Modifier.height(10.dp))
-                    Rule(1.dp)
-                    Row(
-                        modifier = Modifier.padding(vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text("Then", fontSize = 17.sp)
-                        Icon(maneuverIcon(then), contentDescription = null, modifier = Modifier.size(24.dp))
-                        Text("${then.action} ${then.ontoRoad}".trim(), fontSize = 19.sp)
+                when {
+                    d == null -> Text("Starting…", fontSize = 26.sp)
+                    d.arrived -> Text("You've arrived", fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                    else -> {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(maneuverIcon(d.next), contentDescription = null, modifier = Modifier.size(64.dp))
+                            Text(formatDistance(d.distanceToNextM), fontSize = 48.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Text(
+                            text = "${d.next?.action ?: "Continue"} ${d.next?.ontoRoad ?: ""}".trim(),
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        d.afterNext?.let { then ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text("Then", fontSize = 16.sp)
+                                Icon(maneuverIcon(then), contentDescription = null, modifier = Modifier.size(20.dp))
+                                Text(
+                                    "${then.action} ${then.ontoRoad}".trim(),
+                                    fontSize = 16.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                        if (loading) Text("Rerouting…", fontSize = 16.sp)
                     }
-                    Rule(1.dp)
                 }
-                if (loading) Text("Rerouting…", fontSize = 18.sp)
+            }
+
+            // Road event ahead.
+            if (d?.incidentAhead != null && d.incidentAheadM < 3000) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(10.dp)
+                        .background(Color.White)
+                        .border(2.dp, Color.Black)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(Icons.Outlined.WarningAmber, contentDescription = null, modifier = Modifier.size(22.dp))
+                    Text(
+                        "${d.incidentAhead.shortLabel} · ${formatDistance(d.incidentAheadM)}",
+                        fontSize = 16.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
 
@@ -135,15 +155,16 @@ fun DriveScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
+                Text(destination?.name ?: "", fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (d != null && !d.arrived) {
                     val arrive = DateFormat.getTimeInstance(DateFormat.SHORT)
                         .format(Date(System.currentTimeMillis() + (d.remainingS * 1000).toLong()))
-                    Text(arrive, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-                    Text("${formatDuration(d.remainingS)} · ${formatDistance(d.remainingM)}", fontSize = 17.sp)
+                    Text(arrive, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text("${formatDuration(d.remainingS)} · ${formatDistance(d.remainingM)}", fontSize = 16.sp)
                 }
             }
             Box(

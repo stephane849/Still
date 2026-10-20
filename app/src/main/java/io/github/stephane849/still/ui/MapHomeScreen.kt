@@ -48,15 +48,16 @@ import io.github.stephane849.still.data.LocationRepository
 import io.github.stephane849.still.data.SavedPlacesRepository
 import io.github.stephane849.still.map.StillMap
 import io.github.stephane849.still.map.rememberStillMapState
-import io.github.stephane849.still.navigation.NavigationViewModel
+import io.github.stephane849.still.navigationSession
 
 /** Still's home: the map, with search on top and saved places below. */
 @Composable
 fun MapHomeScreen(
     navController: NavController,
-    navigationViewModel: NavigationViewModel
+    onSearch: () -> Unit
 ) {
     val context = LocalContext.current
+    val navigationViewModel = context.navigationSession
     val locationRepository = remember { LocationRepository(context) }
     val location by locationRepository.location.collectAsState()
     val savedPlacesRepository = remember { SavedPlacesRepository(context) }
@@ -97,7 +98,7 @@ fun MapHomeScreen(
                     .weight(1f)
                     .height(52.dp)
                     .border(2.dp, Color.Black)
-                    .clickable { navController.navigate("browse") }
+                    .clickable { onSearch() }
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -110,6 +111,29 @@ fun MapHomeScreen(
             }
         }
         Rule()
+
+        // A drive started from the car shows here so the phone can join it.
+        val drive by navigationViewModel.drive.collectAsState()
+        val destination by navigationViewModel.destination.collectAsState()
+        if (drive != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { navController.navigate("drive") }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Navigating to ${destination?.name ?: ""}",
+                    fontSize = 18.sp,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text("Open", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+            Rule(1.dp)
+        }
 
         // The map.
         Box(Modifier.weight(1f).fillMaxWidth()) {

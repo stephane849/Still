@@ -44,6 +44,17 @@ fun SearchScreenHost(
         ) {
             CircularProgressIndicatorMMD()
         }
+    } else if (searchQuery.isBlank()) {
+        val mainViewModel: MainViewModel = viewModel()
+        val apiKey by mainViewModel.apiKey.collectAsState()
+        io.github.stephane849.still.ui.SearchSuggestions(
+            hasSearchKey = !apiKey.isNullOrEmpty(),
+            onCategory = { searchViewModel.onSearchQueryChange(it) },
+            onSavedPlace = { place ->
+                context.navigationSession.setDestination(place.name, place.lat, place.lng)
+                navController.navigate("preview")
+            }
+        )
     } else {
         SearchScreen(
             searchResults = searchResults,
