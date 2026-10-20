@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
                 val navigationViewModel = navigationSession
                 val route = navBackStackEntry?.destination?.route
                 // The map, route preview and drive screens draw their own headers.
-                val showTopBar = route != null && route !in setOf("main", "preview", "drive", "place/{slot}")
+                val showTopBar = route != null && route !in setOf("main", "preview", "drive", "place/{slot}", "keys")
 
                 Scaffold(
                     topBar = {
@@ -113,6 +113,7 @@ class MainActivity : ComponentActivity() {
                         composable("browse") { MainScreen(navController, searchViewModel = searchViewModel) }
                         composable("preview") { RoutePreviewScreen(navController) }
                         composable("drive") { DriveScreen(navController) }
+                        composable("keys") { io.github.stephane849.still.ui.ApiKeysScreen(navController) }
                         composable(
                             "place/{slot}",
                             arguments = listOf(navArgument("slot") { type = NavType.IntType })

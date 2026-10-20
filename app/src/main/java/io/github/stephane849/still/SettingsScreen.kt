@@ -70,9 +70,7 @@ fun SettingsScreen(
     val routingServer by userPreferencesRepository.routingServer.collectAsState(initial = "")
     var newRoutingServer by remember(routingServer) { mutableStateOf(routingServer) }
     val tomTomKey by userPreferencesRepository.tomTomKey.collectAsState(initial = "")
-    var newTomTomKey by remember(tomTomKey) { mutableStateOf(tomTomKey) }
     val ontario511Key by userPreferencesRepository.ontario511Key.collectAsState(initial = "")
-    var newOntario511Key by remember(ontario511Key) { mutableStateOf(ontario511Key) }
     val snackbarHostState = remember { SnackbarHostStateMMD() }
     var isEditingGoogleKey by remember(googleApiKey) { mutableStateOf(googleApiKey.isNullOrEmpty()) }
     val currentLocation by viewModel.currentLocation.collectAsState()
@@ -154,7 +152,7 @@ fun SettingsScreen(
 
         item {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                Text(text = "Traffic", fontSize = 16.sp)
+                Text(text = "Traffic and search keys", fontSize = 16.sp)
                 Spacer(modifier = Modifier.padding(4.dp))
                 Text(
                     text = when {
@@ -166,33 +164,12 @@ fun SettingsScreen(
                     fontSize = 16.sp,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.padding(4.dp))
-                Text(
-                    text = "A TomTom key gives traffic-aware routes and shows slow sections. " +
-                        "An Ontario 511 key adds roadwork, closures and collisions on your route.",
-                    fontSize = 14.sp
-                )
-                Spacer(modifier = Modifier.padding(4.dp))
-                TextFieldMMD(
-                    value = newTomTomKey,
-                    onValueChange = { newTomTomKey = it },
-                    label = { Text("TomTom API key") }
-                )
-                Spacer(modifier = Modifier.padding(4.dp))
-                TextFieldMMD(
-                    value = newOntario511Key,
-                    onValueChange = { newOntario511Key = it },
-                    label = { Text("Ontario 511 key") }
-                )
                 Spacer(modifier = Modifier.padding(8.dp))
-                ButtonMMD(onClick = {
-                    coroutineScope.launch {
-                        userPreferencesRepository.saveTomTomKey(newTomTomKey)
-                        userPreferencesRepository.saveOntario511Key(newOntario511Key)
-                        snackbarHostState.showSnackbar("Traffic keys saved")
-                    }
-                }) {
-                    Text("Save keys")
+                ButtonMMD(
+                    onClick = { navController.navigate("keys") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("API keys")
                 }
                 Spacer(modifier = Modifier.padding(16.dp))
                 HorizontalDividerMMD(

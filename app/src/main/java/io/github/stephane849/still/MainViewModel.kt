@@ -25,12 +25,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Expose the key required for the currently selected backend
     private val apiKeyFlow: Flow<String?> = combine(
         userPreferencesRepository.searchProvider,
-        userPreferencesRepository.googleApiKey
-    ) { provider, googleKey ->
+        userPreferencesRepository.googleApiKey,
+        userPreferencesRepository.hereApiKey
+    ) { provider, googleKey, hereKey ->
         when (provider) {
             SearchProvider.GOOGLE_PLACES -> googleKey
-            // HERE key is also provided via BuildConfig from local.properties
-            SearchProvider.HERE -> BuildConfig.HERE_API_KEY
+            // Key entered in Settings first, then one built into the app.
+            SearchProvider.HERE -> hereKey.ifBlank { BuildConfig.HERE_API_KEY }
         }
     }
 

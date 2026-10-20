@@ -65,6 +65,14 @@ class UserPreferencesRepository(
     val ontario511Key: Flow<String> = context.dataStore.data
         .map { preferences -> preferences[ONTARIO_511_KEY] ?: "" }
 
+    /** HERE key for place search, entered in Settings. */
+    val hereApiKey: Flow<String> = context.dataStore.data
+        .map { preferences -> preferences[HERE_KEY] ?: "" }
+
+    suspend fun saveHereApiKey(key: String) {
+        context.dataStore.edit { settings -> settings[HERE_KEY] = key.trim() }
+    }
+
     /** Spoken turn-by-turn guidance on or off. */
     val voiceEnabled: Flow<Boolean> = context.dataStore.data
         .map { preferences -> preferences[VOICE_ENABLED] ?: true }
@@ -133,6 +141,7 @@ class UserPreferencesRepository(
         val ROUTING_SERVER = stringPreferencesKey("routing_server")
         val TOMTOM_KEY = stringPreferencesKey("tomtom_key")
         val VOICE_ENABLED = booleanPreferencesKey("voice_enabled")
+        val HERE_KEY = stringPreferencesKey("here_api_key")
         val ONTARIO_511_KEY = stringPreferencesKey("ontario_511_key")
 
     }

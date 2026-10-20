@@ -34,8 +34,9 @@ class HerePlacesApiService(
         }
     }
 
-    private fun getApiKey(): String? {
-        val key = BuildConfig.HERE_API_KEY
+    private suspend fun getApiKey(): String? {
+        // Key entered in Settings first, then one built into the app.
+        val key = userPreferencesRepository.hereApiKey.first().ifBlank { BuildConfig.HERE_API_KEY }
         if (key.isEmpty()) {
             Log.e("HerePlacesApiService", "HERE API key not configured")
             return null
