@@ -153,6 +153,57 @@ fun SettingsScreen(
         }
 
         item {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                Text(text = "Traffic", fontSize = 16.sp)
+                Spacer(modifier = Modifier.padding(4.dp))
+                Text(
+                    text = when {
+                        tomTomKey.isNotBlank() && ontario511Key.isNotBlank() -> "On: live traffic and Ontario 511 road events."
+                        tomTomKey.isNotBlank() -> "On: live traffic. Add an Ontario 511 key for road events."
+                        ontario511Key.isNotBlank() -> "Road events only. Add a TomTom key for live traffic."
+                        else -> "Off. Routes ignore traffic until you add a TomTom key."
+                    },
+                    fontSize = 16.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.padding(4.dp))
+                Text(
+                    text = "A TomTom key gives traffic-aware routes and shows slow sections. " +
+                        "An Ontario 511 key adds roadwork, closures and collisions on your route.",
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.padding(4.dp))
+                TextFieldMMD(
+                    value = newTomTomKey,
+                    onValueChange = { newTomTomKey = it },
+                    label = { Text("TomTom API key") }
+                )
+                Spacer(modifier = Modifier.padding(4.dp))
+                TextFieldMMD(
+                    value = newOntario511Key,
+                    onValueChange = { newOntario511Key = it },
+                    label = { Text("Ontario 511 key") }
+                )
+                Spacer(modifier = Modifier.padding(8.dp))
+                ButtonMMD(onClick = {
+                    coroutineScope.launch {
+                        userPreferencesRepository.saveTomTomKey(newTomTomKey)
+                        userPreferencesRepository.saveOntario511Key(newOntario511Key)
+                        snackbarHostState.showSnackbar("Traffic keys saved")
+                    }
+                }) {
+                    Text("Save keys")
+                }
+                Spacer(modifier = Modifier.padding(16.dp))
+                HorizontalDividerMMD(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+                Spacer(modifier = Modifier.padding(16.dp))
+            }
+        }
+
+        item {
             io.github.stephane849.still.ui.VoiceSettings()
             Spacer(modifier = Modifier.padding(16.dp))
             HorizontalDividerMMD(
@@ -185,36 +236,6 @@ fun SettingsScreen(
                     }
                 }) {
                     Text("Save")
-                }
-                Spacer(modifier = Modifier.padding(16.dp))
-                Text(text = "Traffic", fontSize = 16.sp)
-                Spacer(modifier = Modifier.padding(4.dp))
-                Text(
-                    text = "A TomTom key gives traffic-aware routes and shows slow sections. " +
-                        "An Ontario 511 key adds roadwork, closures and collisions on your route.",
-                    fontSize = 14.sp
-                )
-                Spacer(modifier = Modifier.padding(4.dp))
-                TextFieldMMD(
-                    value = newTomTomKey,
-                    onValueChange = { newTomTomKey = it },
-                    label = { Text("TomTom API key") }
-                )
-                Spacer(modifier = Modifier.padding(4.dp))
-                TextFieldMMD(
-                    value = newOntario511Key,
-                    onValueChange = { newOntario511Key = it },
-                    label = { Text("Ontario 511 key") }
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
-                ButtonMMD(onClick = {
-                    coroutineScope.launch {
-                        userPreferencesRepository.saveTomTomKey(newTomTomKey)
-                        userPreferencesRepository.saveOntario511Key(newOntario511Key)
-                        snackbarHostState.showSnackbar("Traffic keys saved")
-                    }
-                }) {
-                    Text("Save keys")
                 }
                 Spacer(modifier = Modifier.padding(8.dp))
                 Text(

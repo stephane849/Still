@@ -111,6 +111,10 @@ fun RoutePreviewScreen(navController: NavController) {
                     }
                     Text(traffic, fontSize = 16.sp, modifier = Modifier.padding(horizontal = 16.dp))
                 }
+                val trafficNote by session.trafficNote.collectAsState()
+                trafficNote?.let {
+                    Text(it, fontSize = 16.sp, modifier = Modifier.padding(horizontal = 16.dp))
+                }
 
                 StillMap(
                     modifier = Modifier

@@ -70,6 +70,10 @@ class NavigationSession(context: Context) {
     private val _drive = MutableStateFlow<DriveState?>(null)
     val drive: StateFlow<DriveState?> = _drive
 
+    private val _trafficNote = MutableStateFlow<String?>(null)
+    /** Why the current car route has no traffic data, if it doesn't. */
+    val trafficNote: StateFlow<String?> = _trafficNote
+
     private val _mode = MutableStateFlow(TravelMode.CAR)
     val mode: StateFlow<TravelMode> = _mode
 
@@ -150,6 +154,7 @@ class NavigationSession(context: Context) {
                     return@launch
                 }
                 val start = GeoPoint(origin.latitude, origin.longitude)
+                _trafficNote.value = null
                 val r = when (_mode.value) {
                     TravelMode.BIKE -> OsrmRouter(OsrmRouter.BIKE_SERVER).route(start, dest.point)
                     TravelMode.WALK -> OsrmRouter(OsrmRouter.WALK_SERVER).route(start, dest.point)
@@ -158,8 +163,12 @@ class NavigationSession(context: Context) {
                         val osrm = OsrmRouter(prefs.routingServer.first())
                         if (tomTomKey.isNotBlank()) {
                             runCatching { TomTomRouter(tomTomKey).route(start, dest.point) }
-                                .getOrElse { osrm.route(start, dest.point) }
+                                .getOrElse { e ->
+                                    _trafficNote.value = "Traffic unavailable (${e.message ?: "TomTom error"}). Check your TomTom key in Settings."
+                                    osrm.route(start, dest.point)
+                                }
                         } else {
+                            _trafficNote.value = "No traffic data. Add a TomTom key in Settings."
                             osrm.route(start, dest.point)
                         }
                     }
