@@ -29,6 +29,21 @@ jobs:
       - name: Build APKs
         run: gradle assembleDebug assembleRelease --stacktrace
 
+      - name: Check Android Auto declarations in the APK
+        run: |
+          AAPT2=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)aapt2
+          APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
+          $AAPT2 dump xmltree "$APK" --file AndroidManifest.xml > manifest.txt
+          $AAPT2 dump resources "$APK" | grep -i "automotive" > res.txt || true
+          unzip -l "$APK" | grep -i "res/" | grep -ci xml > /dev/null || true
+          for pat in "CarAppService" "category.NAVIGATION" "gms.car.application" "minCarApiLevel" "NAVIGATION_TEMPLATES" "ACCESS_SURFACE" "targetSdkVersion" "StillCarAppService"; do
+            n=$(grep -c "$pat" manifest.txt || true)
+            echo "::notice title=AA check::$pat found $n times"
+          done
+          echo "::notice title=AA res::$(tr '\n' ' ' < res.txt | cut -c1-900)"
+          grep -n -A3 "gms.car.application" manifest.txt | tr '\n' ' ' | cut -c1-900 | sed 's/^/::notice title=AA meta::/'
+          grep -n -B2 -A12 "StillCarAppService" manifest.txt | tr '\n' ' ' | cut -c1-1500 | sed 's/^/::notice title=AA service::/'
+
       - uses: actions/upload-artifact@v4
         with:
           name: still-apk
