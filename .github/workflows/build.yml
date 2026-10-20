@@ -26,8 +26,13 @@ jobs:
           HERE_API_KEY: ${{ secrets.HERE_API_KEY }}
         run: echo "HERE_API_KEY=${HERE_API_KEY}" > local.properties
 
-      - name: Build debug APK
-        run: gradle assembleDebug --stacktrace
+      - name: Build APKs
+        run: gradle assembleDebug assembleRelease --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: still-apk
+          path: app/build/outputs/apk/release/*.apk
 
       - uses: actions/upload-artifact@v4
         with:
