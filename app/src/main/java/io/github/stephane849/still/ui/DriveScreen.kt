@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.VolumeOff
+import androidx.compose.material.icons.outlined.VolumeUp
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -166,6 +168,20 @@ fun DriveScreen(navController: NavController) {
                     Text(arrive, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                     Text("${formatDuration(d.remainingS)} · ${formatDistance(d.remainingM)}", fontSize = 16.sp)
                 }
+            }
+            val voiceOn by session.voiceEnabled.collectAsState()
+            Box(
+                modifier = Modifier
+                    .padding(end = 10.dp)
+                    .border(2.dp, Color.Black)
+                    .clickable { session.setVoiceEnabled(!voiceOn) }
+                    .padding(12.dp)
+            ) {
+                Icon(
+                    if (voiceOn) Icons.Outlined.VolumeUp else Icons.Outlined.VolumeOff,
+                    contentDescription = if (voiceOn) "Mute voice" else "Turn voice on",
+                    modifier = Modifier.size(26.dp)
+                )
             }
             Box(
                 modifier = Modifier
