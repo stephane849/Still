@@ -44,7 +44,8 @@ import io.github.stephane849.still.data.SearchProvider
 import io.github.stephane849.still.data.UserPreferencesRepository
 import com.mudita.mmd.components.buttons.ButtonMMD
 import com.mudita.mmd.components.divider.HorizontalDividerMMD
-import com.mudita.mmd.components.lazy.LazyColumnMMD
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import com.mudita.mmd.components.radio_button.RadioButtonMMD
 import com.mudita.mmd.components.snackbar.SnackbarHostStateMMD
 import com.mudita.mmd.components.switcher.SwitchMMD
@@ -133,24 +134,15 @@ fun SettingsScreen(
         }
     }
 
-    LazyColumnMMD(
+    // A plain scrolling column: Mudita's lazy list wouldn't scroll on the Kompakt.
+    Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .imePadding()
             .padding(vertical = 16.dp)
     ) {
-        item {
-            io.github.stephane849.still.ui.SavedPlacesSection(onEdit = { slot -> navController.navigate("place/$slot") })
-            Spacer(modifier = Modifier.padding(16.dp))
-            HorizontalDividerMMD(
-                thickness = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            Spacer(modifier = Modifier.padding(16.dp))
-        }
-
-        item {
+        run {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 Text(text = "Traffic and search keys", fontSize = 16.sp)
                 Spacer(modifier = Modifier.padding(4.dp))
@@ -180,7 +172,18 @@ fun SettingsScreen(
             }
         }
 
-        item {
+        run {
+            io.github.stephane849.still.ui.SavedPlacesSection(onEdit = { slot -> navController.navigate("place/$slot") })
+            Spacer(modifier = Modifier.padding(16.dp))
+            HorizontalDividerMMD(
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.padding(16.dp))
+        }
+
+        run {
             io.github.stephane849.still.ui.VoiceSettings()
             Spacer(modifier = Modifier.padding(16.dp))
             HorizontalDividerMMD(
@@ -191,7 +194,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.padding(16.dp))
         }
 
-        item {
+        run {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 Text(text = "Routing server", fontSize = 16.sp)
                 Spacer(modifier = Modifier.padding(4.dp))
@@ -231,7 +234,7 @@ fun SettingsScreen(
             }
         }
 
-        item {
+        run {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 Text(text = "Data Provider", fontSize = 16.sp)
                 Spacer(modifier = Modifier.padding(4.dp))
@@ -330,11 +333,11 @@ fun SettingsScreen(
             }
         }
 
-        item {
+        run {
             Spacer(modifier = Modifier.padding(16.dp))
         }
 
-        item {
+        run {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 Text(text = "Search Radius: ${sliderValue.toInt()} miles")
 
@@ -357,7 +360,7 @@ fun SettingsScreen(
             }
         }
 
-        item {
+        run {
             HorizontalDividerMMD(
                 thickness = 1.dp,
                 color = MaterialTheme.colorScheme.outlineVariant,
@@ -365,7 +368,7 @@ fun SettingsScreen(
             )
         }
 
-        item {
+        run {
             Spacer(modifier = Modifier.padding(16.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -401,12 +404,12 @@ fun SettingsScreen(
             }
         }
 
-        item {
+        run {
             Spacer(modifier = Modifier.padding(8.dp))
         }
 
         if (!useDeviceLocation) {
-            item {
+            run {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -491,11 +494,11 @@ fun SettingsScreen(
                     }
                 }
             }
-            item {
+            run {
                 Spacer(modifier = Modifier.padding(16.dp))
             }
         } else {
-            item {
+            run {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
