@@ -120,10 +120,7 @@ class NavigationSession(context: Context) {
     /** Speaks a sample sentence, for the Settings "Test voice" button. */
     fun testVoice() {
         voice.prepare()
-        scope.launch {
-            kotlinx.coroutines.delay(600)
-            voice.say("In 400 metres, turn right onto Bronson Avenue")
-        }
+        voice.say("In 400 metres, turn right onto Bronson Avenue")
     }
 
     val isDriving: Boolean get() = _drive.value != null

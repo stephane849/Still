@@ -37,12 +37,24 @@ class Voice(context: Context) {
             if (!value) stop()
         }
 
+    /** The engine package Still last connected to, so a change in Settings is noticed. */
+    private var enginePackage: String? = null
+
     fun prepare() {
-        if (tts != null) return
-        tts = TextToSpeech(appContext) { status ->
+        val chosen = defaultEngine()
+        if (tts != null && chosen == enginePackage) return
+        // First start, or the preferred engine changed: connect to the chosen one.
+        tts?.shutdown()
+        ready = false
+        enginePackage = chosen
+        tts = TextToSpeech(appContext, { status ->
             if (status != TextToSpeech.SUCCESS) return@TextToSpeech
             tts?.let { engine ->
-                engine.language = Locale.getDefault()
+                // Keep the engine's own voice unless it can't speak the phone's language.
+                val wanted = Locale.getDefault()
+                if (engine.isLanguageAvailable(wanted) >= TextToSpeech.LANG_AVAILABLE) {
+                    engine.language = wanted
+                }
                 engine.setAudioAttributes(attributes)
                 engine.setSpeechRate(0.95f)
                 engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -57,11 +69,23 @@ class Voice(context: Context) {
                 })
             }
             ready = true
-        }
+            pending?.let { pending = null; say(it) }
+        }, chosen)
     }
 
+    /** The engine picked as "Preferred engine" in Android's text-to-speech settings. */
+    private fun defaultEngine(): String? =
+        android.provider.Settings.Secure.getString(appContext.contentResolver, "tts_default_synth")
+
+    /** Spoken once the engine finishes starting, if a prompt arrives before then. */
+    private var pending: String? = null
+
     fun say(text: String) {
-        if (!enabled || !ready) return
+        if (!enabled) return
+        if (!ready) {
+            pending = text
+            return
+        }
         audioManager.requestAudioFocus(focusRequest)
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, text.hashCode().toString())
     }
