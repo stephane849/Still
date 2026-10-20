@@ -89,7 +89,7 @@ fun SearchSuggestions(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Icon(Icons.Outlined.Place, contentDescription = null)
+                    Icon(slotIcon(place.slot), contentDescription = null)
                     Text(place.name, fontSize = 20.sp)
                 }
                 HorizontalDividerMMD(modifier = Modifier.padding(start = 16.dp), thickness = 1.dp)

@@ -174,9 +174,12 @@ fun MapHomeScreen(
         // Saved places.
         if (saved.isEmpty()) {
             Text(
-                text = "Save places from search to see them here.",
+                text = "Add Home, Work and other places in Settings.",
                 fontSize = 17.sp,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { navController.navigate("settings") }
+                    .padding(16.dp)
             )
         } else {
             Row(
@@ -199,7 +202,7 @@ fun MapHomeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Icon(Icons.Outlined.Place, contentDescription = null, modifier = Modifier.size(26.dp))
+                        Icon(slotIcon(place.slot), contentDescription = null, modifier = Modifier.size(26.dp))
                         Text(
                             text = place.name,
                             fontSize = 16.sp,

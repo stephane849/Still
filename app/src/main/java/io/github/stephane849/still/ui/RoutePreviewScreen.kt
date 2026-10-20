@@ -58,16 +58,12 @@ fun RoutePreviewScreen(navController: NavController) {
     val incidents by session.incidents.collectAsState()
     val loading by session.loading.collectAsState()
     val error by session.error.collectAsState()
-    val savedRepo = remember { SavedPlacesRepository(context) }
-    val saved by savedRepo.places.collectAsState(initial = emptyList())
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(destination) {
         if (destination != null && session.route.value == null) session.planRoute()
     }
 
     val dest = destination
-    val isSaved = dest != null && saved.any { it.name == dest.name }
 
     Column(Modifier.fillMaxSize().background(Color.White)) {
         StillHeader(
@@ -138,14 +134,6 @@ fun RoutePreviewScreen(navController: NavController) {
                     }
                 }
 
-                if (dest != null) {
-                    SavePlaceButton(
-                        defaultName = dest.name,
-                        lat = dest.point.lat,
-                        lng = dest.point.lng,
-                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp)
-                    )
-                }
                 ButtonMMD(
                     onClick = {
                         session.startDrive()

@@ -152,12 +152,6 @@ fun PoiDetailsScreen(
                 ) {
                     Text("Directions", fontSize = 22.sp)
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-                io.github.stephane849.still.ui.SavePlaceButton(
-                    defaultName = poiName,
-                    lat = poiLat,
-                    lng = poiLng
-                )
             }
         }
     }

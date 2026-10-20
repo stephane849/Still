@@ -65,6 +65,14 @@ class UserPreferencesRepository(
     val ontario511Key: Flow<String> = context.dataStore.data
         .map { preferences -> preferences[ONTARIO_511_KEY] ?: "" }
 
+    /** Spoken turn-by-turn guidance on or off. */
+    val voiceEnabled: Flow<Boolean> = context.dataStore.data
+        .map { preferences -> preferences[VOICE_ENABLED] ?: true }
+
+    suspend fun saveVoiceEnabled(on: Boolean) {
+        context.dataStore.edit { settings -> settings[VOICE_ENABLED] = on }
+    }
+
     suspend fun saveTomTomKey(key: String) {
         context.dataStore.edit { settings -> settings[TOMTOM_KEY] = key.trim() }
     }
@@ -124,6 +132,7 @@ class UserPreferencesRepository(
         val SEARCH_RADIUS = intPreferencesKey("search_radius") // in miles
         val ROUTING_SERVER = stringPreferencesKey("routing_server")
         val TOMTOM_KEY = stringPreferencesKey("tomtom_key")
+        val VOICE_ENABLED = booleanPreferencesKey("voice_enabled")
         val ONTARIO_511_KEY = stringPreferencesKey("ontario_511_key")
 
     }

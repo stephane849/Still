@@ -2,7 +2,6 @@ package io.github.stephane849.still.navigation
 
 import android.content.Context
 import android.location.Location
-import android.speech.tts.TextToSpeech
 import io.github.stephane849.still.LocationService
 import io.github.stephane849.still.data.LocationRepository
 import io.github.stephane849.still.data.UserPreferencesRepository
@@ -22,7 +21,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 data class Destination(val name: String, val point: GeoPoint)
 
@@ -94,13 +92,41 @@ class NavigationSession(context: Context) {
     private var routeJob: Job? = null
     private var locationJob: Job? = null
 
-    private var tts: TextToSpeech? = null
-    private var ttsReady = false
+    private val voice = Voice(appContext)
+
+    private val _voiceEnabled = MutableStateFlow(true)
+    /** Spoken guidance on or off; mirrors the setting. */
+    val voiceEnabled: StateFlow<Boolean> = _voiceEnabled
+
+    init {
+        scope.launch {
+            prefs.voiceEnabled.collect {
+                _voiceEnabled.value = it
+                voice.enabled = it
+            }
+        }
+    }
+
+    fun setVoiceEnabled(on: Boolean) {
+        _voiceEnabled.value = on
+        voice.enabled = on
+        scope.launch { prefs.saveVoiceEnabled(on) }
+    }
+
+    /** Speaks a sample sentence, for the Settings "Test voice" button. */
+    fun testVoice() {
+        voice.prepare()
+        scope.launch {
+            kotlinx.coroutines.delay(600)
+            voice.say("In 400 metres, turn right onto Bronson Avenue")
+        }
+    }
 
     val isDriving: Boolean get() = _drive.value != null
 
     fun setDestination(name: String, lat: Double, lng: Double) {
         if (isDriving) endDrive()
+        voice.prepare() // the engine takes a moment to start; warm it before Go
         _destination.value = Destination(name, GeoPoint(lat, lng))
         _route.value = null
         _incidents.value = emptyList()
@@ -183,13 +209,13 @@ class NavigationSession(context: Context) {
             remainingS = r.durationS,
             arrived = false
         )
-        ensureTts()
+        voice.prepare()
         locationRepository.startLocationUpdates(driving = true)
         locationJob?.cancel()
         locationJob = scope.launch {
             location.collect { loc -> if (loc != null) onLocation(loc) }
         }
-        r.steps.getOrNull(1)?.let { speak("${it.action} ${it.ontoRoad}".trim(), "start") }
+        r.steps.getOrNull(1)?.let { speak(Voice.phrase(it), "start") }
     }
 
     fun endDrive() {
@@ -197,7 +223,7 @@ class NavigationSession(context: Context) {
         locationJob = null
         locationRepository.stopLocationUpdates()
         _drive.value = null
-        tts?.stop()
+        voice.stop()
     }
 
     private fun onLocation(loc: Location) {
@@ -249,29 +275,19 @@ class NavigationSession(context: Context) {
             speak("${incident.shortLabel} ahead", "incident-$incidentIndex")
         }
         if (next != null && nextIndex != null) {
-            val text = "${next.action} ${next.ontoRoad}".trim()
+            val text = Voice.phrase(next)
             val stepLength = stepAlong[nextIndex] - (stepAlong.getOrNull(nextIndex - 1) ?: 0.0)
             if (toNext <= NEAR_M) {
                 speak(text, "near-$nextIndex")
             } else if (toNext <= FAR_M && stepLength > FAR_M * 1.5) {
-                speak("In ${formatDistance(toNext)}, $text", "far-$nextIndex")
-            }
-        }
-    }
-
-    private fun ensureTts() {
-        if (tts != null) return
-        tts = TextToSpeech(appContext) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                tts?.language = Locale.getDefault()
-                ttsReady = true
+                speak(Voice.ahead(toNext, next), "far-$nextIndex")
             }
         }
     }
 
     private fun speak(text: String, key: String) {
         if (!announced.add(key)) return
-        if (ttsReady) tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, key)
+        voice.say(text)
     }
 
     private companion object {

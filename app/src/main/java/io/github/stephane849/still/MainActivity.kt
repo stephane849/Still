@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
                 val navigationViewModel = navigationSession
                 val route = navBackStackEntry?.destination?.route
                 // The map, route preview and drive screens draw their own headers.
-                val showTopBar = route != null && route !in setOf("main", "preview", "drive")
+                val showTopBar = route != null && route !in setOf("main", "preview", "drive", "place/{slot}")
 
                 Scaffold(
                     topBar = {
@@ -113,6 +113,15 @@ class MainActivity : ComponentActivity() {
                         composable("browse") { MainScreen(navController, searchViewModel = searchViewModel) }
                         composable("preview") { RoutePreviewScreen(navController) }
                         composable("drive") { DriveScreen(navController) }
+                        composable(
+                            "place/{slot}",
+                            arguments = listOf(navArgument("slot") { type = NavType.IntType })
+                        ) { entry ->
+                            io.github.stephane849.still.ui.EditPlaceScreen(
+                                navController,
+                                slot = entry.arguments?.getInt("slot") ?: 0
+                            )
+                        }
                         composable("settings") {
                             val scrollToLocationSettings =
                                 navController.previousBackStackEntry?.savedStateHandle?.get<Boolean>(

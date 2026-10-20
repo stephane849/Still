@@ -142,6 +142,28 @@ fun SettingsScreen(
             .padding(vertical = 16.dp)
     ) {
         item {
+            io.github.stephane849.still.ui.SavedPlacesSection(onEdit = { slot -> navController.navigate("place/$slot") })
+            Spacer(modifier = Modifier.padding(16.dp))
+            HorizontalDividerMMD(
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.padding(16.dp))
+        }
+
+        item {
+            io.github.stephane849.still.ui.VoiceSettings()
+            Spacer(modifier = Modifier.padding(16.dp))
+            HorizontalDividerMMD(
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.padding(16.dp))
+        }
+
+        item {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 Text(text = "Routing server", fontSize = 16.sp)
                 Spacer(modifier = Modifier.padding(4.dp))
