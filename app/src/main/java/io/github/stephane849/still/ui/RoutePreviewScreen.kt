@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -69,22 +67,7 @@ fun RoutePreviewScreen(navController: NavController) {
     Column(Modifier.fillMaxSize().background(Color.White)) {
         StillHeader(
             title = dest?.name ?: "Route",
-            onBack = { navController.popBackStack() },
-            actions = {
-                if (dest != null) {
-                    IconButton(onClick = {
-                        scope.launch {
-                            if (isSaved) savedRepo.remove(dest.name)
-                            else savedRepo.save(SavedPlace(dest.name, dest.point.lat, dest.point.lng))
-                        }
-                    }) {
-                        Icon(
-                            if (isSaved) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
-                            contentDescription = if (isSaved) "Remove from saved" else "Save place"
-                        )
-                    }
-                }
-            }
+            onBack = { navController.popBackStack() }
         )
 
         val r = route
@@ -147,6 +130,14 @@ fun RoutePreviewScreen(navController: NavController) {
                     }
                 }
 
+                if (dest != null) {
+                    SavePlaceButton(
+                        defaultName = dest.name,
+                        lat = dest.point.lat,
+                        lng = dest.point.lng,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp)
+                    )
+                }
                 ButtonMMD(
                     onClick = {
                         session.startDrive()

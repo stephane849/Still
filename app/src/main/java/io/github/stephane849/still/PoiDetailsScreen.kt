@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.verticalScroll
 import com.mudita.mmd.components.buttons.ButtonMMD
 
 
@@ -77,6 +78,7 @@ fun PoiDetailsScreen(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
+                .verticalScroll(androidx.compose.foundation.rememberScrollState())
                 .padding(16.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -150,6 +152,12 @@ fun PoiDetailsScreen(
                 ) {
                     Text("Directions", fontSize = 22.sp)
                 }
+                Spacer(modifier = Modifier.height(12.dp))
+                io.github.stephane849.still.ui.SavePlaceButton(
+                    defaultName = poiName,
+                    lat = poiLat,
+                    lng = poiLng
+                )
             }
         }
     }
