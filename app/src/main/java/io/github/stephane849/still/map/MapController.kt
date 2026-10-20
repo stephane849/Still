@@ -1,6 +1,10 @@
 package io.github.stephane849.still.map
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Path
 import io.github.stephane849.still.routing.GeoPoint
 import io.github.stephane849.still.routing.Incident
 import io.github.stephane849.still.routing.Route
@@ -9,6 +13,7 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
@@ -34,6 +39,7 @@ class MapController(
 
     private var lastLat: Double? = null
     private var lastLng: Double? = null
+    private var lastBearing: Float = 0f
     private var route: Route? = null
     private var incidents: List<Incident> = emptyList()
 
@@ -68,9 +74,14 @@ class MapController(
         }
     }
 
-    fun setLocation(lat: Double, lng: Double, follow: Boolean, zoom: Double = 16.0) {
+    /**
+     * @param bearing direction of travel in degrees from north, when the
+     * GPS knows it; the arrow keeps its last heading otherwise.
+     */
+    fun setLocation(lat: Double, lng: Double, follow: Boolean, zoom: Double = 16.0, bearing: Float? = null) {
         lastLat = lat
         lastLng = lng
+        if (bearing != null) lastBearing = bearing
         drawLocation(lat, lng)
         if (follow) map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), zoom))
     }
@@ -111,7 +122,9 @@ class MapController(
     }
 
     private fun drawLocation(lat: Double, lng: Double) {
-        style?.getSourceAs<GeoJsonSource>(ME_SOURCE)?.setGeoJson(pointJson(lat, lng))
+        style?.getSourceAs<GeoJsonSource>(ME_SOURCE)?.setGeoJson(
+            """{"type":"Feature","properties":{"bearing":$lastBearing},"geometry":{"type":"Point","coordinates":[$lng,$lat]}}"""
+        )
     }
 
     private fun drawRoute(r: Route) {
@@ -188,24 +201,52 @@ class MapController(
             )
         )
 
+        // Your position: a ringed navigation arrow that turns with your heading.
+        style.addImage(ARROW_IMAGE, arrowBitmap(bg, fg))
         style.addLayer(
-            CircleLayer("still-me-ring", ME_SOURCE).withProperties(
-                PropertyFactory.circleRadius(14f),
-                PropertyFactory.circleColor(bg),
-                PropertyFactory.circleStrokeColor(fg),
-                PropertyFactory.circleStrokeWidth(3f)
-            )
-        )
-        style.addLayer(
-            CircleLayer("still-me-dot", ME_SOURCE).withProperties(
-                PropertyFactory.circleRadius(6f),
-                PropertyFactory.circleColor(fg)
+            SymbolLayer("still-me", ME_SOURCE).withProperties(
+                PropertyFactory.iconImage(ARROW_IMAGE),
+                PropertyFactory.iconRotate(Expression.get("bearing")),
+                PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
+                PropertyFactory.iconAllowOverlap(true),
+                PropertyFactory.iconIgnorePlacement(true)
             )
         )
     }
 
+    /** Draws the position arrow: a pointed chevron inside a ring, in two tones only. */
+    private fun arrowBitmap(bgHex: String, fgHex: String): Bitmap {
+        val d = context.resources.displayMetrics.density
+        val size = (40 * d).toInt()
+        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val c = Canvas(bmp)
+        val bg = android.graphics.Color.parseColor(bgHex)
+        val fg = android.graphics.Color.parseColor(fgHex)
+        val cx = size / 2f
+        val r = size / 2f - 2 * d
+
+        val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = bg; style = Paint.Style.FILL }
+        val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = fg; style = Paint.Style.STROKE; strokeWidth = 3 * d
+        }
+        c.drawCircle(cx, cx, r, fill)
+        c.drawCircle(cx, cx, r, ring)
+
+        // Arrow pointing up (north); MapLibre rotates it by the bearing.
+        val arrow = Path().apply {
+            moveTo(cx, cx - r * 0.62f)
+            lineTo(cx + r * 0.46f, cx + r * 0.48f)
+            lineTo(cx, cx + r * 0.22f)
+            lineTo(cx - r * 0.46f, cx + r * 0.48f)
+            close()
+        }
+        c.drawPath(arrow, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = fg; style = Paint.Style.FILL })
+        return bmp
+    }
+
     private companion object {
         const val ME_SOURCE = "still-me"
+        const val ARROW_IMAGE = "still-arrow"
         const val ROUTE_SOURCE = "still-route"
         const val SLOW_SOURCE = "still-slow"
         const val INCIDENT_SOURCE = "still-incidents"

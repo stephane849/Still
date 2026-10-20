@@ -13,11 +13,12 @@ import kotlinx.serialization.json.Json
  */
 class OsrmRouter(
     private val baseUrl: String,
+    private val profile: String = "driving",
     private val client: HttpClient = defaultClient
 ) {
     suspend fun route(from: GeoPoint, to: GeoPoint): Route {
         val base = baseUrl.trim().trimEnd('/')
-        val url = "$base/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}" +
+        val url = "$base/route/v1/$profile/${from.lng},${from.lat};${to.lng},${to.lat}" +
             "?overview=full&geometries=geojson&steps=true"
         val body = client.get(url).bodyAsText()
         val response = json.decodeFromString(OsrmResponse.serializer(), body)
@@ -47,6 +48,10 @@ class OsrmRouter(
 
     companion object {
         const val DEFAULT_SERVER = "https://router.project-osrm.org"
+
+        /** FOSSGIS's public OSRM servers for cycling and walking (fair use). */
+        const val BIKE_SERVER = "https://routing.openstreetmap.de/routed-bike"
+        const val WALK_SERVER = "https://routing.openstreetmap.de/routed-foot"
         private val json = Json { ignoreUnknownKeys = true }
         private val defaultClient by lazy { HttpClient(Android) }
     }

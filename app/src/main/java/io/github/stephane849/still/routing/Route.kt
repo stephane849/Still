@@ -2,6 +2,12 @@ package io.github.stephane849.still.routing
 
 data class GeoPoint(val lat: Double, val lng: Double)
 
+enum class TravelMode(val label: String) {
+    CAR("Car"),
+    BIKE("Bike"),
+    WALK("Walk")
+}
+
 data class RouteStep(
     val type: String,
     val modifier: String?,

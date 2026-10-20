@@ -2,6 +2,11 @@ package io.github.stephane849.still.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.outlined.DirectionsBike
+import androidx.compose.material.icons.outlined.DirectionsCar
+import androidx.compose.material.icons.outlined.DirectionsWalk
+import io.github.stephane849.still.routing.TravelMode
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,6 +74,9 @@ fun RoutePreviewScreen(navController: NavController) {
             title = dest?.name ?: "Route",
             onBack = { navController.popBackStack() }
         )
+        val mode by session.mode.collectAsState()
+        ModeSelector(selected = mode, onSelect = { session.setMode(it) })
+        Rule(1.dp)
 
         val r = route
         when {
@@ -150,6 +158,49 @@ fun RoutePreviewScreen(navController: NavController) {
                 ) {
                     Text("Go", fontSize = 24.sp)
                 }
+            }
+        }
+    }
+}
+
+/** Car, bike or walk, as three equal tabs; the selected one is solid black. */
+@Composable
+private fun ModeSelector(selected: TravelMode, onSelect: (TravelMode) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        TravelMode.values().forEach { m ->
+            val on = m == selected
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp)
+                    .background(if (on) Color.Black else Color.White)
+                    .border(2.dp, Color.Black)
+                    .clickable { onSelect(m) },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = when (m) {
+                        TravelMode.CAR -> Icons.Outlined.DirectionsCar
+                        TravelMode.BIKE -> Icons.Outlined.DirectionsBike
+                        TravelMode.WALK -> Icons.Outlined.DirectionsWalk
+                    },
+                    contentDescription = null,
+                    tint = if (on) Color.White else Color.Black,
+                    modifier = Modifier.size(22.dp)
+                )
+                Text(
+                    m.label,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (on) Color.White else Color.Black,
+                    modifier = Modifier.padding(start = 6.dp)
+                )
             }
         }
     }

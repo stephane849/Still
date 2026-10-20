@@ -13,6 +13,7 @@ import io.github.stephane849.still.routing.OsrmRouter
 import io.github.stephane849.still.routing.Route
 import io.github.stephane849.still.routing.RouteStep
 import io.github.stephane849.still.routing.TomTomRouter
+import io.github.stephane849.still.routing.TravelMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -71,6 +72,20 @@ class NavigationSession(context: Context) {
     private val _drive = MutableStateFlow<DriveState?>(null)
     val drive: StateFlow<DriveState?> = _drive
 
+    private val _mode = MutableStateFlow(TravelMode.CAR)
+    val mode: StateFlow<TravelMode> = _mode
+
+    /** Switches between car, bike and walking, replanning any current route. */
+    fun setMode(m: TravelMode) {
+        if (m == _mode.value) return
+        _mode.value = m
+        if (_destination.value != null && !isDriving) {
+            _route.value = null
+            _incidents.value = emptyList()
+            planRoute()
+        }
+    }
+
     private var cumulative = DoubleArray(0)
     private var stepAlong = DoubleArray(0)
     private var incidentAlong = DoubleArray(0)
@@ -109,12 +124,19 @@ class NavigationSession(context: Context) {
                     return@launch
                 }
                 val start = GeoPoint(origin.latitude, origin.longitude)
-                val tomTomKey = prefs.tomTomKey.first()
-                val r = if (tomTomKey.isNotBlank()) {
-                    runCatching { TomTomRouter(tomTomKey).route(start, dest.point) }
-                        .getOrElse { OsrmRouter(prefs.routingServer.first()).route(start, dest.point) }
-                } else {
-                    OsrmRouter(prefs.routingServer.first()).route(start, dest.point)
+                val r = when (_mode.value) {
+                    TravelMode.BIKE -> OsrmRouter(OsrmRouter.BIKE_SERVER).route(start, dest.point)
+                    TravelMode.WALK -> OsrmRouter(OsrmRouter.WALK_SERVER).route(start, dest.point)
+                    TravelMode.CAR -> {
+                        val tomTomKey = prefs.tomTomKey.first()
+                        val osrm = OsrmRouter(prefs.routingServer.first())
+                        if (tomTomKey.isNotBlank()) {
+                            runCatching { TomTomRouter(tomTomKey).route(start, dest.point) }
+                                .getOrElse { osrm.route(start, dest.point) }
+                        } else {
+                            osrm.route(start, dest.point)
+                        }
+                    }
                 }
                 setRoute(r)
                 loadIncidents(r)
@@ -140,7 +162,7 @@ class NavigationSession(context: Context) {
 
     private suspend fun loadIncidents(r: Route) {
         val key = prefs.ontario511Key.first()
-        if (key.isBlank()) {
+        if (key.isBlank() || _mode.value != TravelMode.CAR) {
             _incidents.value = emptyList()
             incidentAlong = DoubleArray(0)
             return

@@ -95,7 +95,13 @@ fun StillMap(
         val c = controller ?: return@LaunchedEffect
         val loc = location ?: return@LaunchedEffect
         val firstFix = !centredOnce && route == null
-        c.setLocation(loc.latitude, loc.longitude, follow = follow || firstFix, zoom = if (follow) 16.0 else 15.0)
+        c.setLocation(
+            loc.latitude,
+            loc.longitude,
+            follow = follow || firstFix,
+            zoom = if (follow) 16.0 else 15.0,
+            bearing = if (loc.hasBearing()) loc.bearing else null
+        )
         centredOnce = true
     }
 

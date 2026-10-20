@@ -47,6 +47,7 @@ class PlacesCarScreen(carContext: CarContext) : Screen(carContext) {
 
     private fun go(place: SavedPlace) {
         val session = carContext.navigationSession
+        session.setMode(io.github.stephane849.still.routing.TravelMode.CAR)
         session.setDestination(place.name, place.lat, place.lng)
         session.planRoute(onReady = { session.startDrive() })
         screenManager.push(NavigationCarScreen(carContext))

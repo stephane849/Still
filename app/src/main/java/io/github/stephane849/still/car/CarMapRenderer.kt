@@ -99,7 +99,12 @@ class CarMapRenderer(private val carContext: CarContext) : SurfaceCallback {
 
         s.launch {
             session.location.collect { loc ->
-                if (loc != null) c.setLocation(loc.latitude, loc.longitude, follow = session.isDriving)
+                if (loc != null) c.setLocation(
+                    loc.latitude,
+                    loc.longitude,
+                    follow = session.isDriving,
+                    bearing = if (loc.hasBearing()) loc.bearing else null
+                )
             }
         }
     }
